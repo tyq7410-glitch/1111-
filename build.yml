@@ -36,6 +36,28 @@ jobs:
             fi
           fi
 
+      # If all files were uploaded flat (without folders), put them back into src/main/java by their package line.
+      - name: Rebuild folders from flat files (only if needed)
+        run: |
+          if [ -d src/main/java ] || find _unzipped -type d -path '*/src/main/java' 2>/dev/null | grep -q .; then
+            echo "Folder structure is fine, nothing to rebuild"
+            exit 0
+          fi
+          COUNT=0
+          for f in $(find . -maxdepth 1 -name '*.java'); do
+            pkg=$(grep -m1 -E '^package ' "$f" | sed -E 's/^package ([^;]+);.*/\1/' | tr -d '\r')
+            if [ -z "$pkg" ]; then echo "skip $f (no package line)"; continue; fi
+            dest="src/main/java/$(echo "$pkg" | tr . /)"
+            mkdir -p "$dest"
+            mv "$f" "$dest/"
+            COUNT=$((COUNT+1))
+          done
+          mkdir -p src/main/resources
+          for r in fabric.mod.json aurora.mixins.json; do
+            if [ -f "$r" ]; then mv "$r" src/main/resources/; echo "moved $r"; fi
+          done
+          echo "Moved $COUNT java files into src/main/java"
+
       # Works even if the project is inside a subfolder or an unpacked zip.
       - name: Find the project folder
         id: proj
@@ -49,6 +71,10 @@ jobs:
           done
           if [ -z "$DIR" ]; then
             echo "::error::The src/main/java folder was not found. Upload the project zip (AuroraCheatClient.zip) to the repository root, or drag the whole src folder into the repository."
+            exit 1
+          fi
+          if [ ! -f "$DIR/src/main/resources/fabric.mod.json" ]; then
+            echo "::error::fabric.mod.json is missing. Upload fabric.mod.json and aurora.mixins.json to the repository (root or src/main/resources)."
             exit 1
           fi
           echo "Project folder: $DIR"

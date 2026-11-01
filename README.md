@@ -59,6 +59,10 @@ LightLevel, AutoRefill, AutoSapling, FoodHUD, SessionStats, HeldCounter, LowHeal
 2. Убедись, что в репозитории есть `.github/workflows/build.yml` из этого архива (замени содержимое через значок карандаша).
 3. Workflow сам распакует zip и соберёт мод.
 
+## Если файлы загрузились без папок
+Если все `.java` файлы лежат в корне репозитория, workflow сам разложит их по папкам по строке `package`,
+а `fabric.mod.json` и `aurora.mixins.json` положит в `src/main/resources`. Нужны также `build.gradle`, `settings.gradle`, `gradle.properties`.
+
 ## Красный крестик в Actions
 Открой упавший запуск -> шаг, помеченный красным. Что значит:
 - **Find the project folder** — не загрузились `build.gradle` или папка `src`: залей СОДЕРЖИМОЕ папки AuroraCheatClient.
